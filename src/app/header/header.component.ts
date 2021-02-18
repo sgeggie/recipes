@@ -12,6 +12,8 @@ import { DataStorageService } from '../shared/data-storage.service';
 export class HeaderComponent implements OnInit, OnDestroy {
   collapsed = true;
   isAuthenticated = false;
+  navbarOpen = false;
+
   private userSubscription: Subscription;
 
   constructor(private dsService: DataStorageService,
@@ -38,4 +40,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnDestroy(){
     this.userSubscription.unsubscribe();
   }
+  toggleMyNavbar() {
+    this.navbarOpen = !this.navbarOpen;
+    console.log('toggle');
+    }
 }

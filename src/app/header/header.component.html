@@ -1,13 +1,14 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="#">Recipe Book</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
+  <div class="container-fluid">
+    <a class="navbar-brand">Recipe Book</a>
+    <button class="navbar-toggler" type="button" >
+      <span class="navbar-toggler-icon" (click)="toggleMyNavbar()"></span>
     </button>
-    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-        <div class="navbar-nav" *ngIf="isAuthenticated">
+    <div class="navbar-collapse" [ngClass]="{collapse: !navbarOpen}">
+        <ul class="navbar-nav" *ngIf="isAuthenticated">
             <a class="nav-item nav-link" routerLinkActive="active" routerLink="/recipes">Recipe Book <span class="sr-only">(current)</span></a>
             <a class="nav-item nav-link" routerLinkActive="active" routerLink="/shopping-list">Shopping List</a>
-        </div>
+        </ul>
     </div>  
       <ul class="nav navbar-nav navbar-right">
         <a class="nav-item nav-link" routerLinkActive="active" routerLink="/auth" *ngIf="!isAuthenticated">Login</a>
@@ -24,4 +25,5 @@
             </div>              
         </li>
       </ul>
+    </div>  
 </nav>
