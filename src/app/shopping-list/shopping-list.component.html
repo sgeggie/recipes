@@ -1,0 +1,18 @@
+<div class="row">
+    <div class="col-12">
+        <app-shopping-edit></app-shopping-edit>
+        <hr>
+        <button class="btn btn-outline-secondary m-1" 
+        printSectionId="shopping-list" 
+        [useExistingCss]="true"
+        ngxPrint>Print</button>
+        <ul class="list-group" id="shopping-list">
+            <a class="list-group-item list-group-item-action clearfix text-decoration-none" 
+                style="cursor: pointer"
+                *ngFor="let ingredient of ingredients, let i=index"
+                (click)="onSelect(i)">
+                {{ingredient.name}} ({{ingredient.amount}})
+            </a>
+        </ul>         
+    </div>
+</div>

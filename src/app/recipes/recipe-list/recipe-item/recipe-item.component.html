@@ -1,0 +1,15 @@
+<a style="cursor: pointer;" 
+[routerLink]="[index]"
+routerLinkActive="active"
+class="list-group-item list-group-item-action clearfix text-decoration-none">
+    <div class="d-flex w-100 flex-row justify-content-between">
+        <div class="pull-left">
+            <h4 class="list-group-item-heading mb-1">{{recipe.name}}</h4>
+            <p class="list-group-item-text mb-1">{{recipe.description}}</p>
+        </div>
+        <span class="pull-right">
+            <img src="{{recipe.imagePath}}" alt="" class="img-fluid" 
+            style="max-height:  50px;">
+        </span>
+    </div>
+</a>
