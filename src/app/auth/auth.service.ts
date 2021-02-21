@@ -6,6 +6,9 @@ import { BehaviorSubject, throwError } from "rxjs";
 import { catchError, tap } from "rxjs/operators";
 import { User } from "./user.model";
 import { environment } from "../../environments/environment";
+import { Store } from "@ngrx/store";
+import * as fromApp from '../store/app.reducer';
+import * as AuthActions from './store/auth.actions';
 
 export interface AuthResponseData {
     kind: string,
@@ -20,10 +23,11 @@ export interface AuthResponseData {
 @Injectable({providedIn: 'root'})
 export class AuthService {
     //BehaviorSubject provides access before, during, after changes have occurred.  not just when.
-    user = new BehaviorSubject<User>(null);
+   // user = new BehaviorSubject<User>(null);
     private tokenExpirationTimer: any;
     constructor(private http: HttpClient,
-                private router: Router){}
+                private router: Router,
+                private store: Store<fromApp.AppState>){}
     
     register(email: string, password: string){
         //Firebase signup RESTful API using my Firebase API key
@@ -54,7 +58,7 @@ export class AuthService {
                 }));
     }
     logout(){
-        this.user.next(null);
+        this.store.dispatch(new AuthActions.Logout());
         localStorage.removeItem('userData');
         if(this.tokenExpirationTimer){
             clearTimeout(this.tokenExpirationTimer);
@@ -79,15 +83,23 @@ export class AuthService {
                                         new Date(userData._tokenExpirationDate));
             if(loadedUser.token){
                 let expirationDuration = loadedUser.tokenExpirationDate.getTime() - new Date().getTime();
-                this.user.next(loadedUser); 
+                //this.user.next(loadedUser); 
+                this.store.dispatch(new AuthActions.Login(
+                    {
+                        email: loadedUser.email,
+                        id: loadedUser.id,
+                        token:  loadedUser.token,
+                        tokenExpDate: loadedUser.tokenExpirationDate
+                    })
+                );
                 this.autoLogout(expirationDuration);
             }
             else{
-                this.user.next(null);
+                this.store.dispatch(new AuthActions.Logout());
             }    
         }
         else {
-            this.user.next(null);
+            this.store.dispatch(new AuthActions.Logout());
         }
         
     }
@@ -107,7 +119,16 @@ export class AuthService {
             token,
             expDate);
         
-        this.user.next(user);
+        //this.user.next(user);
+        this.store.dispatch(new AuthActions.Login(
+            {
+                email: user.email,
+                id: user.id,
+                token:  user.token,
+                tokenExpDate: user.tokenExpirationDate
+            })
+        );
+
         this.autoLogout(expiresIn * 1000);
         localStorage.setItem('userData',JSON.stringify(user));
     }

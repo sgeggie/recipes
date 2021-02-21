@@ -5,7 +5,7 @@
 export const environment = {
   production: false,
   fireBaseAPIKey:'AIzaSyBOw0HQ4H8ok27a-Ayg8emCEo1gAYLXfH4'
-};
+  };
 
 /*
  * For easier debugging in development mode, you can import the following file

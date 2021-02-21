@@ -1,6 +1,11 @@
 import { Injectable} from '@angular/core';
 import { Subject} from 'rxjs';
+import { Store } from '@ngrx/store';
+
 import { Recipe } from './recipe.model';
+import * as ShoppingListActions from '../shopping-list/store/shopping-list.actions';
+import * as fromShoppingList from '../shopping-list/store/shopping-list.reducer';
+import * as fromApp from '../store/app.reducer';
 
 @Injectable()
 export class RecipeService {
@@ -26,6 +31,8 @@ export class RecipeService {
     //             new Ingredient('Cheese',2)
     //         ])
     // ];
+    constructor(private store: Store<fromApp.AppState>){}
+    
     ngOnInit(){
         
     }

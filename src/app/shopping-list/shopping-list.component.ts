@@ -1,7 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject, Subscriber, Subscription } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { Observable, Subscription } from 'rxjs';
 import { Ingredient } from '../shared/ingredient.model';
-import { ShoppingListService } from './shopping-list.service';
+import * as ShoppingListActions from './store/shopping-list.actions';
+import * as fromShoppingList from './store/shopping-list.reducer';
+import * as fromApp from '../store/app.reducer';
 
 @Component({
   selector: 'app-shopping-list',
@@ -9,29 +12,19 @@ import { ShoppingListService } from './shopping-list.service';
   styleUrls: ['./shopping-list.component.css'],
 })
 export class ShoppingListComponent implements OnInit, OnDestroy {
-  ingredients: Ingredient[];
+  ingredients: Observable<{ingredients:Ingredient[]}>;
   ingredientsSubscription: Subscription;
   
-  constructor(private shoppingListService: ShoppingListService) { }
+  constructor(private store: Store<fromApp.AppState> ) {}
 
   ngOnInit(){
-    this.ingredients = this.shoppingListService.getIngredients();
     
-    this.ingredientsSubscription = this.shoppingListService.ingredientsChanged.subscribe(
-      (ingreds: Ingredient[]) => {
-        this.ingredients = ingreds;
-      }
-    );
-    // this.shoppingListService.recipeIngredientsAdded.subscribe(
-    //   (ingreds: Ingredient[]) => {
-    //     console.log(ingreds);
-    //     this.shoppingListService.addIngredientList(ingreds);
-    //   }
-    // );
+    this.ingredients = this.store.select('shoppingList');
+
   }
   
   addToIngredientList(newIngredient:Ingredient){
-    this.shoppingListService.addIngredient(newIngredient);
+    this.store.dispatch(new ShoppingListActions.AddIngredient(newIngredient));
 
   }
   onPrint(){
@@ -39,10 +32,9 @@ export class ShoppingListComponent implements OnInit, OnDestroy {
 
   }
   ngOnDestroy(){
-    this.ingredientsSubscription.unsubscribe();
   }
   onSelect(i: number){
-    this.shoppingListService.ingredientSelected.next(i);
+      this.store.dispatch(new ShoppingListActions.SelectedIngredient(i));
     
   }
 }
