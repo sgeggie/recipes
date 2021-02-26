@@ -1,4 +1,3 @@
-import { registerLocaleData } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
@@ -6,6 +5,8 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
 import { switchMap, map, tap, catchError } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
+import { User } from '../user.model';
+import { AuthService } from '../auth.service';
 
 //Actions provides access to all dispatched actions.
 //An effect class will allow you to respond to any action that does not change the state
@@ -26,18 +27,26 @@ export interface AuthResponseData {
 }
 
 //Helper Functions
-const handleAuthentication = (respData)=>{
-    const expDate = new Date(new Date().getTime() + +respData.expiresIn * 1000);
+const handleAuthentication = (userData)=>{
+    const expDate = new Date(new Date().getTime() + +userData.expiresIn * 1000);
+    const user = new User(
+        userData.email,
+        userData.localId,
+        userData.idToken,
+        expDate
+    );
+    localStorage.setItem('userData',JSON.stringify(user));
+    
+    //update state   
     return new AuthActions.Login({
-        email: respData.email,
-        id: respData.localId,
-        token: respData.idToken,
-        tokenExpDate: expDate
-        });
-
+            email: userData.email,
+            id: userData.localId,
+            token: userData.idToken,
+            tokenExpDate: expDate,
+            redirect: true
+        });   //this means login was successful..
 }
 const handleErrors = (errorResp)=>{
-    console.log(errorResp);
     let errorMsg = 'unknown error occurred!';
     if(!errorResp.error || !errorResp.error.error) {
         return of(new AuthActions.LoginFail(errorMsg));
@@ -58,39 +67,49 @@ const handleErrors = (errorResp)=>{
 @Injectable()
 export class AuthEffects {
 
-    //    authLogin$ =  this.actions$.pipe(
-      
     authLogin$ =  createEffect(() => this.actions$.pipe(
-                    ofType(AuthActions.LOGIN_API_REQUEST),
-                    switchMap( 
-                        (authData: AuthActions.LoginAPIRequest) => {
-                            return this.http.post<AuthResponseData>(
-                            'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + environment.fireBaseAPIKey,
-                            {
-                                email: authData.payload.email,
-                                password: authData.payload.password,
-                                returnSecureToken: true
-                            }
-                            ).pipe( 
-                                map( respData => {
-                                    return handleAuthentication(respData);
-                                    }),
-                                catchError( errorResp => {
-                                    return handleErrors(errorResp);
-                                    })
-                                )          
-                            }
-                        )
-                    )
-                );        
+        ofType(AuthActions.LOGIN_API_REQUEST),
+        switchMap( 
+            (authData: AuthActions.LoginAPIRequest) => {
+                return this.http.post<AuthResponseData>(
+                'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + environment.fireBaseAPIKey,
+                {
+                    email: authData.payload.email,
+                    password: authData.payload.password,
+                    returnSecureToken: true
+                }
+                ).pipe( 
+                    tap((respData)=>{
+                        
+                        this.authService.setLogoutTimer(+respData.expiresIn * 1000);
+                    }),
+                    map( respData => {
+                        const userData = {
+                            email: respData.email,
+                            localId: respData.localId,
+                            idToken: respData.idToken,
+                            expiresIn: respData.expiresIn
+                        };                        
+                        return handleAuthentication(userData);
+                        }),
+                    catchError( errorResp => {
+                        return handleErrors(errorResp);
+                        })
+                    )          
+                }
+            )
+        )
+    );        
        //only this action will trigger the effect.
 
     authSuccess$ =  createEffect(() => 
     this.actions$.pipe(
         ofType(AuthActions.LOGIN),
-        tap(()=>
+        tap((authActionsLogin:AuthActions.Login)=>
             {
-                this.router.navigate(['/']);
+                if (authActionsLogin.payload.redirect){
+                    this.router.navigate(['/']);
+                }    
             }
         )
     )    
@@ -109,8 +128,17 @@ export class AuthEffects {
                     returnSecureToken:true
                 }
             ).pipe(
+                tap((respData)=>{
+                    this.authService.setLogoutTimer(+respData.expiresIn * 1000)
+                }),
                 map( respData => {
-                    return handleAuthentication(respData);
+                    const userData = {
+                        email: respData.email,
+                        localId: respData.localId,
+                        idToken: respData.idToken,
+                        expiresIn:respData.expiresIn
+                    }; 
+                    return handleAuthentication(userData);
                     }),
                 catchError( errorResp => {
                     return handleErrors(errorResp);
@@ -120,9 +148,63 @@ export class AuthEffects {
         )   
     )
    );      
-  
+   autoLogin$ =  createEffect(() => 
+    this.actions$.pipe(
+        ofType(AuthActions.AUTO_LOGIN),
+        map(()=> {
+                const localUserData: {
+                    email: string;
+                    id: string;
+                    _token: string;
+                    _tokenExpirationDate: string;
+                } = JSON.parse(localStorage.getItem('userData'));
+               
+                if(!localUserData){
+                    return {type: "DUMMY"};
+                }
+                const localExpDate = new Date(localUserData._tokenExpirationDate);
+                const expiresIn = localExpDate.getTime() - new Date().getTime();
+                this.authService.setLogoutTimer(expiresIn);
+
+                const loadedUser = new User(
+                    localUserData.email,
+                    localUserData.id,
+                    localUserData._token,
+                    localExpDate
+                );
+
+                if(localUserData._token){
+                    return new AuthActions.Login({
+                        email:loadedUser.email,
+                        id: loadedUser.id,
+                        token: loadedUser.token,
+                        tokenExpDate: localExpDate,
+                        redirect: false
+                    });
+                }
+                else {
+                    return {type: "DUMMY"};
+                }
+            })
+      )  
+   );
+
+   authLogout$ =  createEffect(() => 
+   this.actions$.pipe(
+       ofType(AuthActions.LOGOUT),
+       tap(()=>
+           {
+            localStorage.removeItem('userData');
+            this.authService.clearLogoutTimer();
+            this.router.navigate(['/login']);
+           }
+       )
+   )    
+  ,{dispatch: false});
+
     constructor(private actions$: Actions,
                 private http: HttpClient,
-                private router: Router){};
+                private router: Router,
+                private authService: AuthService){};
 
 }

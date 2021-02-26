@@ -8,6 +8,7 @@
     <div class="col-12">
         <app-recipe-item 
             *ngFor="let r of recipes; let i=index;" 
+            (click)="onSelectedRecipe(i)"
             [recipe]="r"
             [index]="i">
         </app-recipe-item>

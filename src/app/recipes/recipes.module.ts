@@ -12,7 +12,6 @@ import { RecipeEditComponent } from './recipe-edit/recipe-edit.component';
 import { RecipesRoutingModule } from "./recipes-routing.module";
 import { SharedModule } from "../shared/shared.module";
 
-
 @NgModule({
     declarations: [
         RecipesComponent,
@@ -22,7 +21,11 @@ import { SharedModule } from "../shared/shared.module";
         RecipeStartComponent,
         RecipeEditComponent
     ],
-    imports: [NgxPrintModule, RouterModule, SharedModule, ReactiveFormsModule, RecipesRoutingModule]
+    imports: [NgxPrintModule, 
+                RouterModule, 
+                SharedModule, 
+                ReactiveFormsModule, 
+                RecipesRoutingModule]
 })
 export class RecipesModule {
 

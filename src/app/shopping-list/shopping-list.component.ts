@@ -18,7 +18,8 @@ export class ShoppingListComponent implements OnInit, OnDestroy {
   constructor(private store: Store<fromApp.AppState> ) {}
 
   ngOnInit(){
-    
+
+    //ingredients updated whenver there is change in state.
     this.ingredients = this.store.select('shoppingList');
 
   }
