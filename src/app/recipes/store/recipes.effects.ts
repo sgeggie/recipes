@@ -41,9 +41,9 @@ export class RecipesEffects{
     );
     saveRecipes$ = createEffect(() => 
     this.actions$.pipe(
-        ofType(RecipesActions.SAVE_RECIPES_API_REQUEST),
-        withLatestFrom(this.store.select('recipes')),  //returns array with action and state
-        switchMap(([action, state]) => {
+        ofType(RecipesActions.SAVE_RECIPES_API_REQUEST), //returns action
+        withLatestFrom(this.store.select('recipes')),    //returns state 
+        switchMap(([action, state]) => {  //NGRX provides an array output from previous steps in the stream (ofType, state)
             let recipes = state.recipes;
             return this.http.put(
                 'https://recipes-4e188-default-rtdb.firebaseio.com/recipes.json',
